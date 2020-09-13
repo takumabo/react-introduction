@@ -1,0 +1,164 @@
+ここでは開発環境についてまとめています。
+```
+1. Material-uiのインストール
+2. Firebaseの仕組み
+3. Firebase環境構築
+```
+
+がわかります。
+
+# 1. Material-uiのインストール
+Reactはライブラリ=「部品」という点は前回説明しました。
+
+今回はこの部品を簡単に作ることができるMaterial-uiをインストールします。
+react-botに移動して
+```
+cd アプリディレクトリ
+npm install --save @material-ui/core @material-ui/icons @material-ui/system
+```
+を実行してください。
+
+インストール完了後
+package.jsonを確認しましょう。
+dependenciesのなかにmaterial-uiのバージョンが入っていればOKです。
+
+次にインストールしたiconsやreact内で稼働するためのlinkタグを貼り付けます。
+https://material-ui.com/
+に移動して、GET STARTEDをクリックしましょう。
+
+そのページのRoboto FontとFont Iconsの２つのCDNをpublicにあるindex.htmlのheader内へ貼り付けましょう。
+
+```
+//Roboto Font
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+
+//Font Icons
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+```
+
+これでReactの環境構築は終了です。
+
+# 2. Firebaseの仕組み
+
+Firebaseを扱う前にFirebaseについてざっくり理解しておきましょう。
+
+Firebaseとはgoogleが提供するアプリプラットフォームです。mBaas(mobile Backend as a Service)であり、
+要はバックエンドの難しいところをまるっと簡単に扱えて、簡単にアプリを公開できるサービスです。
+FirebaseはいわゆるNoSQL型というもので、Databaseを扱う際に書くSQL文を書く必要はありません。
+基本的にブラウザ操作でdataを扱えちゃうので、開発はフロントに特化できるというのが魅力的です。
+プランにはSpark(無料)プラントBlaze(有料：従量課金性)プランの２つがある。
+アプリを公開する時にfirefuncitonsを使うけど、これは有料版じゃないとできないので有料版にしましょう。
+
+なお、有料版の方が無料版よりもstorage(有料10GBまで無料 vs 無料5GB)やサーバー無料枠が大きいので、
+有料でも変な使い方をしなかったら基本的に課金されることはない。
+1プロジェクト=1アプリの精度をとっている。
+
+という感じです。
+
+# 3. Firebase 環境構築
+
+まずはプロジェクトを作成しましょう。
+https://firebase.google.com/?hl=ja
+でサイトへ移動。
+
+①サインアップをして右上にある「コンソールへ移動」をクリック。
+②プロジェクトを追加をクリック
+③プロジェクト名をreactアプリ名で記入
+④googleアナリティクスを有効でクリック「日本」を選択
+⑤アカウントをdefaultで設定しクリック
+⑥プロジェクトが完成
+
+でプロジェクトが完成します。
+「続行」をクリック後、左上にある「*(歯車)」→プロジェクトを設定をクリック。
+デフォルトの GCP リソース ロケーションを「asia-northeast1」をクリックしましょう。
+
+反映後に一番下にある「</>」マークでwebアプリケーションを作成しましょう。
+①アプリ名をreactのアプリ名で記述。Hosting設定にチェックをつけます。
+②アプリを登録→SDKの追加を次へ→CLIインストールを次へ→Hositingデプロイ画面でコンソールに進むをクリック
+③左側のcloud firebstoreをクリック。
+④ テストモードをクリック
+⑤ cloud firestoreが開いてdatabase画面を確認。
+
+ここまでくるとブラウザでの設定は完了です。
+
+
+次にターミナルでinstallを実行しましょう。
+
+アプリのあるルートディレクトリへ移動します。
+```
+cd アプリ名ディレクトリ
+// ローカル環境とグローバル環境にfirebaseを扱うツールをインストールする。※一度でもしていたらする必要なし
+npm install -g firebase-tools
+// firebaseをアプリのなかにインストール
+npm install --save firebase
+```
+実行後 テキストエディタのpackage.jsonでfirebaseが入っているか確認しましょう。
+
+①firebase login を実行→コマンドからfirebaseへのログインが成功すえればOK
+②firebase init を実行→reactアプリの中でfirebaseファイルを扱えるようにする。
+するとcommandラインででっかくFIRE BASEと出ていると思います。
+③firebasefunction firesore hosting機能を選択しましょう。
+④Use an existing projectを選択。作ったプロジェクトを選択。
+⑤firestore.rulesをそのままエンター
+⑥firestore.indexes.jsonをそのままエンター
+⑦JavascriptかTypeScriptかを選択→Javascriptを選択
+⑧デバック処理→yes
+⑨npm now ? →yes
+⑩public directory?→ buildと記述しましょう
+最後にSPA設定しますか?はyesとしましょう。
+
+これで無事にinitializeが完了しました。
+
+
+
+次にfirebaseを一度デプロイしてみましょう。
+
+デプロイの前にfirebase.rulesの記述を以下のように変更します。
+
+```
+allow read;
+allow write: if request.auth.uid != null;
+```
+
+これで読み込みは全員OK,書き込みはauth認証で、というセキュリティにしました。
+
+次に
+```
+npm run build
+```
+
+を実行し、buildフォルダを作成しましょう。
+そしてfunctions/src/index.tsの
+```
+import * as functions from 'firebase-functions';
+```
+をコメントアウトしましょう。
+
+ここまで完成すればデプロイを実行しましょう。
+```
+firebase deploy
+```
+
+無事deployが完了し、commandLineにあるURLでReactの初期画面が出ればdeployはできています。
+
+HTTP400error→ プロジェクトがBilling acountではないのでdeployできないとのこと。
+「*(歯車)」のプロジェクト設定に移動してBalzeに変更してもう一度deployを実行。
+
+
+
+これでfirebaseとReactアプリの初期設定が完了しました。
+
+次からはガッツリとReact開発をします。
+
+
+
+
+
+
+
+
+
+
+
+
+
