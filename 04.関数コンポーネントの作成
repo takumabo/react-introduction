@@ -1,0 +1,141 @@
+前回ではクラスコンポーネントでstateを管理することを学びました。
+今回は関数コンポーネントで小さな部品を作ることを実践していきましょう。
+
+前回大枠であるAnswersとそれぞれの回答にあたるAnswerがあり、同じようにChatsとChatを定義しました。
+
+大枠であるAnswersと小枠であるAnswerそれぞれの関数コンポーネントを作りましょう。
+
+まずはコンポーネント用のディレクトリをsrc直下でcomponents作ディレクトリで作成しましょう。
+
+その中で、Answers.jsx、Answer.jsx、Chats.jsx、Chat.jsxを作成しましょう。
+
+このファイルをそれぞれ読み込んでもいいのですが、その前にcomponentsのなかにエントリーポイントとなるindex.jsを作成しておきましょう。
+この理由は、Reactでは相互のファイルの場所によって呼び出し位置が変わります。そうなるとファイルごとにいちいち場所を定義する必要があるので
+そうならないようにindex.jsを経由して各ファイルに読み込むようにしておきます。
+これでまとまりのあるファイル管理ができます。
+
+componentsディレクトリ以下にindex.jsを作成、以下のように記述してください。
+
+```
+export { default as Answers } from './Answers.jsx';
+export { default as Answer } from './Answer.jsx';
+export { default as Chats } from './Chats.jsx';
+export { default as Chat } from './Chat.jsx';
+
+```
+これでエントリーポイント経由でコンポーネントの呼び出しが可能になりました。
+
+それではCompoentの作成をつつけましょう。下記のように記述してください。
+
+```
+// App.jsx
+
+import React from 'react';
+import defaultDataset from './dataset';
+import './assets/styles/style.css';
+
+import { Answers,Chats } from './components/index';
+
+export default class App extends React.Component {
+  constructor(props){
+    super(props);
+
+    this.state = {
+      answers:[],
+      chats:[],
+      currentId:"init",
+      dataset: defaultDataset,
+      open:false
+    }
+  }
+
+  initAnswer = () =>{
+    const initDataset = this.state.dataset[this.state.currentId];
+    const initAnswers = initDataset.answers;
+    this.setState({
+      answers: initAnswers
+    })
+  }
+
+  componentDidMount(){
+    this.initAnswer()
+  }
+
+  render(){
+    return (
+      <section className="c-section">
+        <div className="c-box">
+          <Answers answers={this.state.answers} />
+        </div>
+      </section>
+  );
+}
+}
+
+```
+
+データが入っているのはdefalutDatasetです。Answersコンポーネント内にstateを呼び出しましょう。
+this.state.answersを宣言します。
+initのデータを取得するための関数を作りましょう。initAnswerをアロー関数で作成します。まずconstractorで定義した
+datasetを見ると、この時点では空っぽの箱です。値を出すには関数内で指定しましょう。
+最終的にthis.setState({})で値をセットできます。
+
+
+
+
+```
+// Answers.jsx
+
+import React from 'react';
+import '../assets/styles/style.css';
+import { Answer } from './index';
+
+const Answers = (props) =>{
+    return(
+        <div className="c-grid__answer">
+            { props.answers.map((value,index) => {
+                return  <Answer content={value.content} key={index.toString()} />
+            })}
+        </div>
+    )
+}
+
+export default Answers;
+```
+
+ミソは親コンポーネントにあたるApp.jsxからのdataset.jsのデータをprops.answersでもらい、map()処理していることです。
+map()は配列の繰り返しの時に使えるメソッドで中身はコールバック関数と呼ばれ、アロー関数で記述。
+第１引数にはvalue,第２引数にindexを指定し、value.contentとすることで、answers配列に入っている答えを出しています。
+またReactでは繰り返しで生成したものにはkey={}という特殊な配列を使用してindex.toStoring()でそれぞれの値にユニークな値を持たせる必要があります。
+
+```
+// Answer.jsx
+
+import React from 'react';
+import { makeStyles } from '@material-ui/core/styles';
+import Button from '@material-ui/core/Button';
+
+const useStyles = makeStyles((theme) => ({
+    root: {
+    },
+  }));
+
+const Answer = (props) =>{
+
+   // const classes = useStyles();
+
+    return(
+        <div>
+            <Button variant="contained">
+                {props.content}
+            </Button>
+        </div>
+    )
+}
+
+export default Answer;
+```
+
+末端のAnswer.jsxでは親にあたるAnswers.jsxの値をpropsで引き渡されています。
+
+
