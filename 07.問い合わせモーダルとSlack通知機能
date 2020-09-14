@@ -1,0 +1,331 @@
+今回は問い合わせフォーム用のモーダルを作ります。
+
+最初のstateでopen: falseとしていますが、これがtrueになればモーダルが開くというようにします。
+
+それでは問い合わせ用のコンポーネントを作成するところからはじめます。
+compnents以下にFormディレクトリを生成→そのフォルダにFormDialog.jsxを作成します。
+FormDialogにそれぞれデータをもちあわせる形にします。
+なので、このFormDialogはclassコンポーネントで書きましょう。
+以下のように記述します。
+
+
+```
+import React from 'react';
+
+import Button from '@material-ui/core/Button';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import TextInput from './TextInput';
+
+
+export default class FormDialog extends React.Component{
+    constructor(props){
+        super(props);
+
+        this.state = {
+            name:"",
+            email:"",
+            discription:""
+        }
+
+        this.inputName = this.inputName.bind(this);
+        this.inputEmail = this.inputEmail.bind(this);
+        this.inputDescription = this.inputDescription.bind(this);
+    }
+
+    inputName = (event) =>{
+        console.log(event.target.value);
+        this.setState({
+            name: event.target.value
+        })
+    }
+
+    inputEmail = (event) =>{
+        this.setState({
+            email: event.target.value
+        })
+    }
+
+    inputDescription = (event) =>{
+        this.setState({
+            discription: event.target.value
+        })
+    }
+
+    submitForm = () =>{
+        const name  = this.state.name;
+        const email  = this.state.email;
+        const discription  = this.state.discription;
+    }
+    render(){
+        return(
+                <Dialog
+                    open={this.props.open}
+                    onClose={this.props.handleClose}
+                    aria-labelledby="alert-dialog-title"
+                    aria-describedby="alert-dialog-description"
+                >
+                    <DialogTitle id="alert-dialog-title">お問い合わせフォーム</DialogTitle>
+                    <DialogContent>
+                        <TextInput 
+                         label={"お名前(必須)"}
+                         multiline={false}
+                         rows={1}
+                         value={this.state.name}
+                         type={"text"}
+                         onChange={this.inputName}
+                        />
+                        <TextInput 
+                         label={"Email(必須)"}
+                         multiline={false}
+                         rows={1}
+                         value={this.state.email}
+                         type={"email"}
+                         onChange={this.inputEmail}
+                        />
+                        <TextInput 
+                         label={"お問い合わせ内容(必須)"}
+                         multiline={true}
+                         rows={5}
+                         value={this.state.discription}
+                         type={"text"}
+                         onChange={this.inputDescription}
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                    <Button onClick={this.props.handleClose} color="primary">
+                        キャンセル
+                    </Button>
+                    <Button onClick={this.submitForm} color="primary" autoFocus>
+                        送信する
+                    </Button>
+                    </DialogActions>
+                </Dialog>
+        )
+    }
+}
+```
+
+
+次にTextInput.jsxを作成し、以下のように記述しましょう。
+
+```
+import React from 'react';
+import TextField from '@material-ui/core/TextField';
+
+  
+const TextInput = (props) => {
+  
+    return (
+        <TextField 
+        id="standard-basic" 
+        label={props.label}
+        margin={"dense"} 
+        multiline={props.multiline}
+        rows={props.rows}
+        value={props.value}
+        type={props.type}
+        onChange={props.onChange}
+        fullWidth={true}
+
+        />
+    );
+  }
+
+  export default TextInput;
+
+```
+
+モーダルの開閉の有無はApp.jsxで判断するのでreturn()内を以下のように直しましょう。
+```
+import React from 'react';
+import defaultDataset from './dataset';
+import './assets/styles/style.css';
+
+import { Answers,Chats } from './components/index';
+import FormDialog from './components/Forms/FormDialog';
+
+export default class App extends React.Component {
+  constructor(props){
+    super(props);
+
+    this.state = {
+      answers:[],
+      chats:[],
+      currentId:"init",
+      dataset: defaultDataset,
+      open:false
+    }
+
+    this.selectAnswer = this.selectAnswer.bind(this);
+    this.handleClickOpen = this.handleClickOpen.bind(this);
+    this.handleClose = this.handleClose.bind(this);
+  }
+
+  displayNextQuestion = (nextQuestionId) =>{
+    const chats = this.state.chats;
+    chats.push({
+      text: this.state.dataset[nextQuestionId].question,
+      type: 'question'
+    })
+
+    this.setState({
+      answers: this.state.dataset[nextQuestionId].answers,
+      chats:chats,
+      currentId: nextQuestionId
+    })
+  }
+
+
+  selectAnswer = (selectedAnswer,nextQuestionId) => {
+    switch(true){
+      case(nextQuestionId === "init"):
+        setTimeout(()=> this.displayNextQuestion(nextQuestionId),500);
+        break;
+
+      case(/^https:*/.test(nextQuestionId)):
+        const a = document.createElement('a');
+        a.href = nextQuestionId;
+        a.target = '_blank';
+        a.click();
+        break;
+
+      case(nextQuestionId === 'contact'):
+        this.handleClickOpen()
+        break;
+
+      default:
+        const chats = this.state.chats;
+        chats.push({
+          text: selectedAnswer,
+          type: 'answer'
+        });
+    
+        this.setState({
+          chats: chats
+        })
+
+        setTimeout(() => this.displayNextQuestion(nextQuestionId),1000);
+        break;
+
+    }
+  }
+
+  handleClickOpen = () => {
+    this.setState({ open:true })
+ };
+
+  handleClose = () => {
+     this.setState({ open:false })
+ };
+
+
+  componentDidMount(){
+    const initAnswer ="";
+    this.selectAnswer(initAnswer,this.state.currentId)
+  }
+
+  componentDidUpdate(prevProps,prevState,snapshot){
+    const scrollArea = document.getElementById('scroll-area');
+    if(scrollArea){
+      scrollArea.scrollTop = scrollArea.scrollHeight
+    }
+  }
+
+  render(){
+    return (
+      <section className="c-section">
+        <div className="c-box">
+          <Chats chats={this.state.chats} />
+          <Answers answers={this.state.answers} select={this.selectAnswer} />
+          <FormDialog open={this.state.open} handleClose={this.handleClose} />
+        </div>
+      </section>
+  );
+}
+}
+
+```
+
+これでOKです。特に内容としてはhandleCloseやOpen関数をbindして管理している点ですね。
+これをバケツリレーでTextInput.jsxでも動くようにpropsを渡しています。
+
+
+
+ここまですると画面に正しくモーダルが開いていることでしょう。
+
+次に送信した内容をSlack通知できるようにします。
+slackのincomming web hookを使用しましょう。
+
+チャンネルを選択して、WebHookURLをコピーします。fetchメソッドを使ってURLからpostできるようにしましょう。
+
+```
+// FormDialog.jsx
+
+submitForm = () =>{
+        const name  = this.state.name;
+        const email  = this.state.email;
+        const discription  = this.state.discription;
+
+        const payload = {
+            text:'お問い合わせがありました。\n' + 
+                 '名前:' + name + '\n' +
+                 'Email:' + email + '\n' +
+                 '問い合わせ内容:\n' + discription 
+        }
+
+        const url = 'https://hooks.slack.com/services/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';
+
+        fetch(url,{
+            method: 'POST',
+            body: JSON.stringify(payload)
+        }).then(()=>{
+            alert('送信が完了しました。追ってご連絡いたします。')
+            this.setState({
+                name:"",
+                email:"",
+                discription:""
+            })
+            return this.props.handleClose()
+        })
+    }
+
+```
+
+これで指定のスラックへの通知も完了しました。簡単ですね。
+最後にバリデーションを入れておきましょう。
+
+
+```
+// FormDialog.jsx
+
+const validateEmailFormat = (email) => {
+        const regex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/
+        return regex.test(email)
+    }
+
+ const validateRequiredInput = (...args) => {
+        let isBlank = false;
+        for (let i = 0; i < args.length; i=(i+1)|0) {
+            if (args[i] === "") {
+                isBlank = true;
+            }
+        }
+        return isBlank
+  };
+```
+以上で終了になります。
+
+これでslackまでの通知完了ができました。
+次はfirebaseにデータを写してアプリを動かします。
+
+
+
+
+
+
+
+
