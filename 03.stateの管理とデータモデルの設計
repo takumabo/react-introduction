@@ -1,0 +1,252 @@
+この記事では、
+
+1.データモデルの設計とは
+2.stateの管理
+3.reactのモデル開発
+
+を紹介しています。
+
+# 1.データモデルの設計とは
+データモデルとはどの場所からどんなデータを使ってどんな風にデータをセットするのかを設計することを指します。
+簡単に言えばMVCモデルということになります。
+データモデルはViewから設計してワイヤーフレームを描きます。(このボタンを押すとこんな感じになる的な)
+
+ワイヤーフレーム用のアプリはAdobeXDやFigmaがありますが手書きでもOKです。
+なんとなくこんなアプリを作りたい、というところから描き出していきましょう。
+
+今回のアプリは
+お問い合わせのチャットなので
+チャット全体のChatsとその１つ１つのChat,
+答え欄のAnswers とその１つ１つのAnswer、
+Answerにしたがって呼び出すdataIdやデータの内容
+になります。
+
+# 2.stateの管理
+
+stateとは、Reactでレンダリング中の値を保持するためのものです。
+Reactにはクラスコンポーネントと関数コンポーネントがあり、
+クラスコンポーネントでは以下のように初期値(箱)を管理します。
+
+実際のルートで管理するstateは以下の通りです。
+
+```
+constructor(props){
+  super(props);
+  this.state = {
+    answers:[],
+    chats:[],
+    currentId: "init",
+    dataset: {},
+    open: false
+  };
+ }
+```
+
+
+こんな感じでstateでデータを管理していきます。ちなみに上の書き方はClassコンポーネントでの書き方です。
+関数コンポーネントでもかけますが、それは最終セクションのreact hookを使用する時に説明します。
+
+# 3.reactのモデル開発
+
+ここから実際Reactファイルをいじっていきましょう。
+ではApp.jsをApp.jsxに変えて以下のように変更してください。
+
+```
+// src/App.jsx
+
+import React from 'react';
+import defaultDataset from './dataset'; //　記入
+import './assets/styles/style.css'; // 記入
+
+export default class App extends React.Component {
+  constructor(props){
+    super(props);
+
+    this.state = {
+      answers:[],
+      chats:[],
+      currentId:"init",
+      dataset: defaultDataset,
+      open:false
+    }
+  }
+
+  render(){
+    return (
+      <section className="c-section">
+        <div className="c-box">
+
+        </div>
+      </section>
+  );
+}
+}
+
+
+```
+
+src直下にassetsフォルダを作成→stylesフォルダの作成→style.cssを作成しましょう。
+
+```
+// src/assets/styles/style.css
+
+.c-section {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+}
+
+.c-box {
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.3);
+    border-radius: 4px;
+    box-sizing: border-box;
+    height: 592px;
+    max-width: 432px;
+    padding: 0 1rem;
+    width: 100%;
+
+    /* Vertical and horizontal center alignment */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.c-grid__answer {
+    display: flex;
+    flex-flow: column;
+    justify-content: flex-end;
+    height: 192px;
+}
+
+.p-chat__bubble {
+    background: #41B6E6;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    padding: .5rem;
+    margin-right: 1rem;
+    max-width: 80%;
+    width: auto;
+}
+
+.p-chat__row {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    padding-right: 0 !important;
+}
+
+.p-chat__reverse {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    padding-right: 0 !important;
+}
+
+.p-question__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+}
+
+.p-question__description {
+    font-size: 1rem;
+    letter-spacing: .125rem;
+    line-height: 1.7;
+}
+
+
+```
+質問や回答が格納されているdataset.jsをsrc直下に作成しましょう。
+
+```
+// src/dataset.js
+
+const defaultDataset = {
+    "init": {
+        answers: [
+            {content: "物件を購入したい", nextId: "job_offer"},
+            {content: "コンサルティングを依頼したい", nextId: "consultant"},
+            {content: "ダナンコミュニティについて知りたい", nextId: "community"},
+            {content: "直接連絡したい", nextId: "dating"},
+        ],
+        question: "ダナン不動産へようこそ！ご用件はなんでしょうか？",
+    },
+    "job_offer": {
+        answers: [
+            {content: "一軒家(ヴィラ)を購入したい", nextId: "website"},
+            {content: "賃貸物件を検討している", nextId: "webapp"},
+            {content: "コンドテルを購入したい", nextId: "automation_tool"},
+            {content: "その他", nextId: "other_jobs"}
+        ],
+        question: "どのような物件をお探しでしょうか？",
+    },
+    "website": {
+        answers: [
+            {content: "問い合わせる", nextId: "contact"},
+            {content: "最初の質問に戻る", nextId: "init"}
+        ],
+        question: "一軒家(ヴィラ)購入についてですね。コチラからお問い合わせできます。",
+    },
+    "webapp": {
+        answers: [
+            {content: "問い合わせる", nextId: "contact"},
+            {content: "最初の質問に戻る", nextId: "init"}
+        ],
+        question: "賃貸物件についてですね。コチラからお問い合わせできます。",
+    },
+    "automation_tool": {
+        answers: [
+            {content: "問い合わせる", nextId: "contact"},
+            {content: "最初の質問に戻る", nextId: "init"}
+        ],
+        question: "コンドテルについてですね。コチラからお問い合わせできます。",
+    },
+    "other_jobs": {
+        answers: [
+            {content: "問い合わせる", nextId: "contact"},
+            {content: "最初の質問に戻る", nextId: "init"}
+        ],
+        question: "その他についてですね。コチラからお問い合わせできます。",
+    },
+    "consultant": {
+        answers: [
+            {content: "YouTubeで動画を見る", nextId: "https://www.youtube.com/watch?v=uORrDbVyKKg"},
+            {content: "学習コミュニティについて知りたい", nextId: "community"},
+            {content: "facebookでDMする", nextId: "https://www.facebook.com/realestate.danang/"},
+            {content: "最初の質問に戻る", nextId: "init"}
+        ],
+        question: "ダナン不動産ではYouTubeでダナンの海外進出や物件情報を発信しています。また、facebook上で直接DM相談できますよ。",
+    },
+    "community": {
+        answers: [
+            {content: "どんな活動をしているの？", nextId: "community_activity"},
+            {content: "コミュニティをみてみたい", nextId: "https://poste-vn.com/jccid-danang.html"},
+            {content: "最初の質問に戻る", nextId: "init"}
+        ],
+        question: "2010年以降急速な成長を遂げるダナンのコミュニティをご紹介できます！",
+    },
+    "community_activity": {
+        answers: [
+            {content: "さらに詳細を知りたい", nextId: "https://www.youtube.com/watch?v=33B7UxL8juQ"},
+            {content: "最初の質問に戻る", nextId: "init"}
+        ],
+        question: "飲食業や製造業、日本以外の海外顧客とのコンサル業も充実しています！下記より詳細が確認できますよ。",
+    },
+    "dating": {
+        answers: [
+            {content: "DMする", nextId: "https://www.facebook.com/realestate.danang/"},
+            {content: "最初の質問に戻る", nextId: "init"}
+        ],
+        question: "ありがとうございます。下記よりご連絡いただけます。",
+    },
+}
+
+export default defaultDataset
+```
+
+なお、App.cssは削除してください。App.jsxのimport './App.css'を削除しましょう。
+※App.jsxがうまく読み込めない場合は、index.jsのimport文をimport App from './App.jsx'と定義しましょう。
